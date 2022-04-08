@@ -1,0 +1,17 @@
+image: amazon/aws-cli
+
+pipelines:
+  branches:
+    development:
+      - step:
+          name: Deploy to Staging
+          deployment: Staging
+          script:
+            - echo "Deploying to Staging environment"
+            - pipe: atlassian/ssh-run:0.4.0
+              variables:
+                SSH_USER: "${SSH_USER}"
+                SERVER: "${SSH_SERVER}"
+                SSH_KEY: "${SSH_KEY}"
+                MODE: "command"
+                COMMAND: "export APP_ENV=$APP_ENV && sh /var/bash_script_pipeline/disdukcapil/development-api.sh"
