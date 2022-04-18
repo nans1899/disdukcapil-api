@@ -4,8 +4,6 @@
 /public/storage/*.crt
 /storage/*.key
 /storage/*.crt
-/vendor
-.env.backup
 .phpunit.result.cache
 docker-compose.override.yml
 Homestead.json
