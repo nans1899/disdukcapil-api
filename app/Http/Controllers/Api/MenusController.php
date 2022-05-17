@@ -13,16 +13,16 @@ class MenusController extends Controller
 {
 
     public function allMenus(){
-        $menus = Menus::with('childs.childs.childs')->where('parent_id', 0)->whereHas('menuroles', function ($q){
-            $q->where('roles_id', Auth()->user()->role_id);
+        $menus = Menus::with('childs.childs.childs')->where('id', 6)->whereHas('menuroles', function ($q){
+            $q->where('role_id', Auth()->user()->role_id);
         })->where('hide', 0)->get();
 
         return response()->json($menus);
     }
 
     public function getMenus(){
-        $menus = Menus::with('childs')->where('parent_id', 0)->whereHas('menuroles', function ($q){
-            $q->where('roles_id', Auth()->user()->role_id);
+        $menus = Menus::with('childs')->where('id', 6)->whereHas('menuroles', function ($q){
+            $q->where('id', Auth()->user()->id);
         })->orderBy('no', 'asc')->where('hide', 0)->get();
         return MenusResource::collection($menus);
     }
@@ -32,7 +32,7 @@ class MenusController extends Controller
         if ($id) {
             # code...
             $menus = Menus::with('childs')->where('parent_id', $id)->whereHas('menuroles', function ($q){
-                $q->where('roles_id',Auth()->user()->role_id);
+                $q->where('role_id',Auth()->user()->role_id);
             })->orderBy('no', 'asc')->get();
 
             if (empty($menus->toArray())) {

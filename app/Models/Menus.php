@@ -24,15 +24,15 @@ class Menus extends Model
     ];
 
     public function roles(){
-        return $this->belongsToMany(Roles::class, 'menuroles', 'menus_id', 'roles_id');
+        return $this->belongsToMany(Roles::class, 'menuroles', 'menus_id', 'id');
     }
 
     public function menuroles()
     {
-        return $this->hasMany(MenuRoles::class, 'menus_id');
+        return $this->hasMany(MenuRoles::class, 'id');
     }
 
     public function childs(){
-        return $this->hasMany(Menus::class, 'parent_id');
+        return $this->hasMany(Menus::class, 'id');
     }
 }
