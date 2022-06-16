@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Ramsey\Uuid\Uuid;
 
 class ProfileController extends Controller
@@ -30,7 +31,6 @@ class ProfileController extends Controller
             'message'   => 'Data berhasil diambil!',
             'data'      => new UserResource($user)
         ], 200);
-
     }
 
     public function profile(Request $request)
@@ -52,7 +52,7 @@ class ProfileController extends Controller
                 Storage::disk('public')->delete('public/users/' . Auth()->user()->id . '/' . basename($user->foto));
 
                 $foto = $request->file('foto');
-                $foto->storeAs('public/users/' . Auth()->user()->id , $foto->hashName());
+                $foto->storeAs('public/users/' . Auth()->user()->id, $foto->hashName());
                 $user->foto = $foto->hashName();
             }
             $user->update([
@@ -95,7 +95,7 @@ class ProfileController extends Controller
                 Storage::disk('public')->delete('public/users/' . Auth()->user()->id . '/' . basename($user->foto));
 
                 $foto = $request->file('foto');
-                $foto->storeAs('public/users/' . Auth()->user()->id , $foto->hashName());
+                $foto->storeAs('public/users/' . Auth()->user()->id, $foto->hashName());
                 $user->foto = $foto->hashName();
             }
 
@@ -162,64 +162,29 @@ class ProfileController extends Controller
 
     public function changePassword(Request $request)
     {
-        $this->validate($request, [
-            'password'              => 'required|min:6',
-            'new_password'          => 'required|min:6',
-            'confirm_password'      => 'required|min:6|required_with:confirm_password|same:confirm_password'
+        $validator = Validator::make($request->all(), [
+            'old_password' => 'required',
+            'password' => 'required|min:6',
+            'confirm_password' => 'required|same:password',
         ]);
 
-        DB::beginTransaction();
-
-        try {
-            $pass = Hash::make($request->password);
-            $data = Hash::check($request->password, auth()->user()->password);
-
-            if (!$data) {
-                # code...
-                return response()->json([
-                    'success'   => false,
-                    'message'   => 'Password tidak sama!',
-                ], 400);
-            }
-
-            if (strcmp($request->new_password, $request->confirm_password) != 0) {
-                # code...
-                return response()->json([
-                    'success'   => false,
-                    'message'   => 'Password baru dan konfirmasi password tidak sama!',
-                ], 400);
-            }
-
-            if (strcmp($request->get('password'), $request->get('new_password')) == 0) {
-                # code...
-                return response()->json([
-                    'success'   => false,
-                    'message'   => 'Password tidak boleh sama!',
-                ], 400);
-            }
-
-            //code...
-            $user               = Auth::user();
-            $user->password     = bcrypt($request->new_password);
-            $user->save();
-
-            Logs::create([
-                'uuid'      => Uuid::uuid4(),
-                'username'  => Auth()->user()->name,
-                'activity'  => 'CP',
-                'module'    => 'Change Password',
-                'url'       => \Request::url(),
-                'from'      => 'Website',
-            ]);
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            throw $th;
+        if ($validator->fails()) {
+            return response()->json([
+                'success'   => false,
+                'message'   => 'Data tidak valid!',
+                'errors'    => $validator->errors(),
+            ], 400);
         }
-        DB::commit();
-        return response()->json([
-            'success'   => true,
-            'message'   => 'Password berhasil diubah!',
-        ], 200);
-        // Alert::success('Password berhasil diubah!');
+        if (Hash::check($request->old_password, Auth::user()->password)) {
+            $user = Accounts::whereId(Auth()->user()->id)->first();
+            $user->update([
+                'password' => Hash::make($request->password),
+            ]);
+            return response()->json([
+                'success'   => true,
+                'message'   => 'Password Berhasil diubah!',
+                'data'      => $user,
+            ], 200);
+        }
     }
 }
